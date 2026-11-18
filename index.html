@@ -894,7 +894,7 @@ function updEggUI(){
     $('#eggT').textContent=`${r}  나 ${EG.myOk}/${RN} · ${nm} ${EG.thOk}/${RN}`;
     $('#eggS').textContent=`가방 계란 ${S.eggs}개`+(EG.partner&&EG.partner.npc?(S.eggs>=2?` · 한 번 더 할까요? (계란 ${Math.min(ROUNDS,Math.floor(S.eggs/2))*2}개 사용)`:' · 한 번 더 하려면 계란 2개가 필요해요'):'');
     $('#tok').textContent='한 번 더';$('#tok').disabled=!(EG.partner&&EG.partner.npc&&S.eggs>=2);return;}
-  $('#tok').textContent='상대 이마에 톡! (Space)';$('#tok').disabled=!my||S.eggs<=0;
+  $('#tok').textContent='상대 이마에 톡! (Space)';$('#tok').disabled=!my||EG.myLeft<=0;
   $('#eggT').textContent=my?'내 차례! 마커가 초록 구간에 왔을 때 톡!':EG.turn=='wait'?'두근두근…':nm+'님 차례예요. 이마 조심!';
   $('#eggS').textContent=`${Math.min(EG.myN+(my?1:0),RN)||1}/${RN}판 · 나 ${EG.myOk}점 · ${nm} ${EG.thOk}점 · 이번 판 내 계란 ${EG.myLeft}개`;
 }
@@ -1334,7 +1334,9 @@ function onPeers(ch){
     if(myInvite&&pr.eg&&pr.eg.w===myPeer&&S.mode=='walk'&&p.peer===myInvite.to){const base=[myInvite.x,myInvite.z],rn=myInvite.r;myInvite=null;startEgg(o.c,base,0,p.peer,rn);0;}
     if(S.mode=='egg'&&EG.peerId===p.peer){if(pr.eg&&pr.eg.w===myPeer)EG.joined=true;else if(EG.joined)standUp(nm+'님이 일어났어요.');}
   }
-  for(const p of ch.left){const o=peers.get(p.peer);if(o){o.c.dispose();(o.mats||[]).forEach(m=>scene.remove(m.mesh));peers.delete(p.peer);if(EG.peerId===p.peer)standUp();}}
+  // 나간 사람 정리: left 로 온 사람 + 접속자 목록에서 빠진 사람 (left 알림을 놓쳐도 캐릭터가 남지 않게)
+  const here=new Set(ch.peers.map(p=>p.peer)),gone=[...ch.left.map(p=>p.peer),...[...peers.keys()].filter(id=>!here.has(id))];
+  for(const id of gone){const o=peers.get(id);if(o){o.c.dispose();(o.mats||[]).forEach(m=>scene.remove(m.mesh));peers.delete(id);if(EG.peerId===id)standUp();}}
   const n=peers.size;$('#online').textContent=n?`나 포함 ${n+1}명 접속 중`:'지금은 나 혼자 · NPC 5명';
 }
 $('#invY').onclick=()=>{$('#invite').classList.remove('show');if(!pendInv)return;const o=peers.get(pendInv.from);if(!o){toast('상대가 나갔어요.');return;}toast(`상대가 계란 ${pendInv.r}개를 나눠줬어요!`);startEgg(o.c,pendInv.base,1,pendInv.from,pendInv.r);pendInv=null;};
